@@ -1,0 +1,156 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ninja Tycoon Combo Hub</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;background:url('ninja-tycoon-bg.png') center/cover no-repeat fixed;color:#fff;margin:0}
+header{background:#1b1b25;padding:20px;text-align:center}
+header h1{margin:0}
+.container{max-width:900px;margin:auto;padding:20px}
+.card{background:#1e1e2a;border-radius:10px;padding:15px;margin-bottom:15px}
+input,textarea,select{width:100%;padding:10px;margin-top:8px;margin-bottom:12px;border-radius:6px;border:none}
+button{background:#ff3b3b;border:none;color:white;padding:8px 14px;border-radius:6px;cursor:pointer;margin-right:6px}
+button:hover{opacity:.9}
+.combo-title{font-size:18px;font-weight:bold}
+.meta{font-size:12px;opacity:.7;margin-bottom:8px}
+.filter-bar{margin-bottom:15px}
+.leaderboard-item{background:#191923;padding:10px;border-radius:6px;margin-bottom:6px;font-size:14px}
+.highlight{border:2px solid #ff3b3b}
+</style>
+</head>
+<body><header>
+<h1>Ninja Tycoon Combo Hub</h1>
+<p>Share your best PvP combos with the community</p>
+</header><div class="container"><div class="card">
+<h2>Upload Your Combo</h2>
+<input id="player" placeholder="Your name"><select id="range">
+<option value="Short Range">Short Range Player</option>
+<option value="Long Range">Long Range Player</option>
+</select><select id="difficulty">
+<option value="Easy">Easy</option>
+<option value="Medium">Medium</option>
+<option value="Hard">Hard</option>
+</select><textarea id="steps" rows="4" placeholder="Write combo steps..."></textarea><button onclick="addCombo()">Post Combo</button>
+
+</div><div class="card">
+<h2>🏆 Best Combo Of The Week</h2>
+<div id="bestCombo"></div>
+</div><div class="card">
+<h2>🔥 Top Liked Combos</h2>
+<div id="leaderboard"></div>
+</div><div class="filter-bar">
+<button onclick="setFilter('All')">All</button>
+<button onclick="setFilter('Short Range')">Short Range</button>
+<button onclick="setFilter('Long Range')">Long Range</button>
+</div><h2>Community Combos</h2>
+<div id="comboList"></div></div><script>
+let combos = JSON.parse(localStorage.getItem("combos") || "[]");
+let currentFilter = "All";
+
+function save(){
+localStorage.setItem("combos", JSON.stringify(combos));
+}
+
+function setFilter(type){
+currentFilter = type;
+render();
+}
+
+function render(){
+const list=document.getElementById("comboList");
+list.innerHTML="";
+
+let filtered = combos;
+
+if(currentFilter !== "All"){
+filtered = combos.filter(c=>c.range===currentFilter);
+}
+
+filtered.forEach((c,i)=>{
+const div=document.createElement("div");
+
+div.className="card";
+
+div.innerHTML=`
+<div class="combo-title">PvP Combo</div>
+<div class="meta">By ${c.player} | ${c.range} | Difficulty: ${c.difficulty}</div>
+<p>${c.steps.replace(/\\n/g,"<br>")}</p>
+<button onclick="likeCombo(${combos.indexOf(c)})">👍 ${c.likes}</button>
+`;
+
+list.appendChild(div);
+});
+
+renderLeaderboard();
+renderBestCombo();
+}
+
+function addCombo(){
+const player=document.getElementById("player").value;
+const range=document.getElementById("range").value;
+const difficulty=document.getElementById("difficulty").value;
+const steps=document.getElementById("steps").value;
+
+if(!player||!steps){
+alert("Fill all fields");
+return;
+}
+
+combos.unshift({player,range,difficulty,steps,likes:0});
+save();
+render();
+
+document.getElementById("player").value="";
+document.getElementById("steps").value="";
+}
+
+function likeCombo(i){
+combos[i].likes++;
+save();
+render();
+}
+
+function renderLeaderboard(){
+const board=document.getElementById("leaderboard");
+board.innerHTML="";
+
+let sorted=[...combos].sort((a,b)=>b.likes-a.likes).slice(0,5);
+
+sorted.forEach((c,index)=>{
+const div=document.createElement("div");
+
+div.className="leaderboard-item";
+
+div.innerText=`#${index+1} ${c.player} (${c.range}) — 👍 ${c.likes}`;
+
+board.appendChild(div);
+});
+}
+
+function renderBestCombo(){
+const box=document.getElementById("bestCombo");
+box.innerHTML="";
+
+if(combos.length===0){
+box.innerText="No combos yet";
+return;
+}
+
+let best=[...combos].sort((a,b)=>b.likes-a.likes)[0];
+
+const div=document.createElement("div");
+div.className="card highlight";
+
+div.innerHTML=`
+<div class="meta">By ${best.player} | ${best.range} | Difficulty: ${best.difficulty}</div>
+<p>${best.steps.replace(/\\n/g,"<br>")}</p>
+<div>👍 ${best.likes} likes</div>
+`;
+
+box.appendChild(div);
+}
+
+render();
+</script></body>
+</html>
